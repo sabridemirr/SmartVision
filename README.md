@@ -75,3 +75,5 @@ The official example can provide MJPEG at `http://CAMERA_IP:81/stream`. Configur
 This is supplementary environmental awareness, not a certified navigation or obstacle-avoidance product. It cannot determine distance, crossing safety, drop-offs, or whether a path is clear. Keep established mobility aids. Maps receives the destination when the user opens directions; Smart Vision does not store location history. Browser/device behavior can suspend processing in the background.
 
 Implementation references: TensorFlow COCO-SSD documentation https://github.com/tensorflow/tfjs-models/tree/master/coco-ssd and Espressif ESP32 camera driver https://github.com/espressif/esp32-camera. Firmware is provided for integration testing; no physical ESP32 or mobile screen-reader validation was performed during generation.
+
+testing the collab
