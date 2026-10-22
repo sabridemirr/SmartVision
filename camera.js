@@ -6,7 +6,7 @@ export class Camera {
     this.disconnect(); const generation = this.generation; this.source = source;
     if (source === 'webcam') {
       if (!navigator.mediaDevices?.getUserMedia) throw Error('Webcam requires localhost or HTTPS and a browser with camera support.');
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 640 } }, audio: false });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30, max: 30 } }, audio: false });
       if (generation !== this.generation) { stream.getTracks().forEach(t => t.stop()); return false; }
       this.stream = stream; this.video.srcObject = stream; await this.video.play();
       stream.getVideoTracks()[0].onended = () => this.onLost('Camera access ended. Reconnect your camera.');
@@ -30,6 +30,7 @@ export class Camera {
       this.bitmap?.close(); this.bitmap = bitmap;
     } finally { clearTimeout(timeout); }
   }
+  currentFrame() { return this.source === 'webcam' ? (this.video.readyState >= 2 ? this.video : null) : this.bitmap; }
   async frame() { if (!this.active) return null; if (this.source === 'esp32') await this.snapshot(); return this.source === 'webcam' ? this.video : this.bitmap; }
   disconnect() { this.generation++; this.active = false; this.controller?.abort(); this.stream?.getTracks().forEach(t => { t.onended = null; t.stop(); }); this.stream = null; this.video.srcObject = null; this.bitmap?.close(); this.bitmap = null; }
 }
