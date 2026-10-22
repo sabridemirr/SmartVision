@@ -8,11 +8,13 @@ A responsive, accessible student prototype written in HTML, CSS, and vanilla Jav
 2. In its terminal, run `python3 -m http.server 8000 --bind 0.0.0.0` (requires Python 3). Alternatively use VS Code Live Server.
 3. Open http://localhost:8000 on the computer. Do not open index.html through file:// because JavaScript modules require a server.
 4. Select **Device webcam · testing** and press **Start Camera**. Allow camera access. The app downloads TensorFlow.js and model weights once per page session. Initial loading needs internet access.
-5. Place a person, chair, bicycle, car, or backpack in view. Actual results above the selected confidence appear with boxes. Webcam mode is real testing, not simulated data.
+5. Place everyday objects such as a cup, bottle, chair, phone, or backpack in view. All 80 COCO-SSD categories are enabled, including people, vehicles, animals, furniture, and traffic fixtures. Actual results above the selected confidence appear with boxes. Webcam mode is real testing, not simulated data.
 6. Press **Describe Surroundings**. Choose English or Turkish; ensure an appropriate system voice is installed. Pair Bluetooth earphones using the operating system. Use Stop Speaking at any time.
 7. Automatic announcement mode has a ten-second cooldown, or thirty seconds for an unchanged set of object classes. Manual mode is the default. Processing rate is independent of announcement mode.
 
-The camera preview uses analyzed frames at the selected 0.5–2 FPS. A frozen analysis canvas ensures boxes and image pixels align. This is intentionally a low-bandwidth awareness preview rather than a high-FPS video player.
+The webcam preview renders independently of AI using animation frames; the webcam requests up to 30 FPS. ESP32 snapshots refresh independently with a maximum request rate of 10 FPS, limited by Wi-Fi and hardware, with only one request in flight. AI runs serially at the selected maximum rate (0.5–4 detections per second) using a reusable input canvas capped at 640 pixels wide. Boxes represent recent observations, may trail moving objects, and expire after one second. Actual preview and AI rates depend on the device. The FPS badge reports AI throughput, not video FPS.
+
+New sessions default to 50% confidence; the slider permits 30–90%. Saved preferences are retained, so existing users should lower their saved 70% setting if objects are missed. Lower thresholds increase false positives.
 
 ## Smartphone
 
@@ -42,9 +44,9 @@ The official example can provide MJPEG at `http://CAMERA_IP:81/stream`. Configur
 
 - index.html: semantic dashboard and controls.
 - style.css: responsive navy/blue design, focus indicators, mobile layouts.
-- script.js: lifecycle, serial processing loop, status rendering, saved settings.
+- script.js: lifecycle, independent preview, capture and serial AI loops, status rendering, saved settings.
 - camera.js: webcam capture, CORS snapshots, timeout, cleanup and cancellation.
-- detection.js: lazy single-load model, supported-class filtering and canvas boxes.
+- detection.js: lazy single-load model, all-category recognition and canvas boxes.
 - speech.js: browser voices, cooldown and speech cancellation.
 - navigation.js: encoded Google Maps walking-directions URL.
 - esp32/camera_server.ino: JPEG camera firmware.
@@ -52,8 +54,9 @@ The official example can provide MJPEG at `http://CAMERA_IP:81/stream`. Configur
 
 ## Test checklist
 
+- Verify the webcam preview continues updating during slow AI inference; stop/reconnect during an outstanding inference and verify old results never reappear. Verify boxes expire after one second.
 - Start and stop webcam; decline camera permissions; retry after allowing them.
-- Load AI with internet, then recognize all five supported classes where available. Results are probabilistic, not guaranteed. Increase confidence to filter weak results.
+- Load AI with internet, then recognize multiple object categories (including cup, bottle, phone, chair, and person) where available. Results are probabilistic, not guaranteed. Increase confidence to filter weak results.
 - Test manual description, repeat, automatic cooldown, voice toggle, Turkish voice and Stop Speaking. No observations older than five seconds may be spoken.
 - Disconnect ESP32 power/Wi-Fi: after an outstanding request times out (eight seconds), the app clears results, disconnects and announces the failure. Reconnect without refreshing.
 - Switch tabs / open Maps: results and speech clear, processing pauses while hidden and resumes on return. Do not assume navigation and detection run simultaneously.
@@ -65,8 +68,8 @@ The official example can provide MJPEG at `http://CAMERA_IP:81/stream`. Configur
 - **Webcam unavailable:** use localhost or HTTPS, allow camera permission, close another app using it.
 - **Camera fetch failed:** verify IP, /capture, Wi-Fi isolation, firewall and browser local-network permissions. HTTPS-to-HTTP mixed content and missing CORS headers cannot be fixed in frontend JavaScript.
 - **AI unavailable:** check internet access to cdn.jsdelivr.net and model storage, then Retry AI. Keep camera running if desired. Initial library and model downloads are external; camera images are not sent to those services. Google Fonts is optional styling and falls back to system fonts.
-- **Slow phone:** choose one frame every two seconds. Detection is serialized; actual FPS can be lower than selected.
-- **No supported objects:** improve lighting and framing. COCO-SSD recognizes only selected classes here; this says nothing about route safety.
+- **Slow phone:** choose one detection every two seconds; the preview continues independently. Detection is serialized; actual FPS can be lower than selected.
+- **No supported objects:** improve lighting and framing. COCO-SSD recognizes 80 trained categories, not arbitrary objects; stairs, curbs, potholes, glass barriers and drop-offs are not supported classes. A traffic-light detection does not identify its color or crossing safety; this says nothing about route safety.
 - **No speech:** enable Voice Assistance, interact with the page, check system volume/audio output and install the selected language voice. Browser/OS voices may use network speech services; the app does not promise offline voice synthesis.
 - **ESP32 resets:** check power stability and correct camera board pin mapping.
 

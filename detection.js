@@ -1,4 +1,3 @@
-const supported = new Set(['person', 'chair', 'bicycle', 'car', 'backpack']);
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const script = document.createElement('script'); script.src = src;
@@ -13,19 +12,21 @@ export class Detection {
     this.loading = (async () => {
       if (!window.tf) await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
       if (!window.cocoSsd) await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
+      await window.tf.ready();
       this.model = await window.cocoSsd.load({ base: 'lite_mobilenet_v2' }); return this.model;
     })().finally(() => { this.loading = null; });
     return this.loading;
   }
   async detect(frame, threshold) {
     if (!this.model) return [];
-    return (await this.model.detect(frame, 20, threshold)).filter(p => supported.has(p.class) && p.score >= threshold);
+    return (await this.model.detect(frame, 80, threshold)).filter(p => p.score >= threshold);
   }
 }
 export function draw(canvas, frame, predictions) {
   const width = frame.videoWidth || frame.width, height = frame.videoHeight || frame.height;
   if (!width || !height) return;
-  canvas.width = width; canvas.height = height;
+  if (canvas.width !== width) canvas.width = width;
+  if (canvas.height !== height) canvas.height = height;
   const ctx = canvas.getContext('2d'); ctx.drawImage(frame, 0, 0, width, height);
   ctx.lineWidth = Math.max(2, width / 300); ctx.font = `${Math.max(14, width / 40)}px sans-serif`;
   predictions.forEach(p => {
