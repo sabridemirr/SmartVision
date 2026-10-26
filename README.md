@@ -80,3 +80,4 @@ This is supplementary environmental awareness, not a certified navigation or obs
 Implementation references: TensorFlow COCO-SSD documentation https://github.com/tensorflow/tfjs-models/tree/master/coco-ssd and Espressif ESP32 camera driver https://github.com/espressif/esp32-camera. Firmware is provided for integration testing; no physical ESP32 or mobile screen-reader validation was performed during generation.
 
 testing the collab
+testing connection
